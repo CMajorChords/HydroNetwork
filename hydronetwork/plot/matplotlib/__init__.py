@@ -1,0 +1,1 @@
+from hydronetwork.plot.matplotlib.histogram import hist

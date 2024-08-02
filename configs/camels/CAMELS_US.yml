@@ -1,0 +1,61 @@
+# --- CAMELS US configurations ---
+
+# CAMELS文件夹的路径
+#camels_root_path: /home/cmajorchords/data/camels
+#camels_root_path: D:/data/camels
+camels_root_path: /home/gzz/方正/data/camels
+
+# 静态属性文件种类
+attributes_type_name:
+  - clim
+  - geol
+  - hydro
+  - soil
+  - topo
+  - vege
+
+# 要使用的静态属性
+attributes:
+  - elev_mean
+  - slope_mean
+  - area_gages2
+  - p_mean
+  - pet_mean
+  - aridity
+  - p_seasonality
+  - frac_snow
+  - high_prec_freq
+  - high_prec_dur
+  - low_prec_freq
+  - low_prec_dur
+  - frac_forest
+  - lai_max
+  - lai_diff
+  - gvf_max
+  - gvf_diff
+  - soil_depth_pelletier
+  - soil_depth_statsgo
+  - soil_porosity
+  - soil_conductivity
+  - max_water_content
+  - sand_frac
+  - silt_frac
+  - clay_frac
+  - carbonate_rocks_frac
+  - geol_permeability
+
+# 要使用的气象数据来源
+forcing_source: daymet  # "daymet", "maurer" or "nldas"
+
+# 动态输入变量
+ignore_precip_cols_daymet:
+  - Hr
+  - dayl(s)
+  - swe(mm)
+ignore_precip_cols_maurer_and_nldas:
+  - Hr
+  - Dayl(s)
+  - SWE(mm)
+
+# 要忽略的流域gauge_id
+ignore_gauge_id_list_path: configs/camels/ignore_gauge_id.csv

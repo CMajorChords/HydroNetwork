@@ -1,0 +1,5 @@
+Target Size,Image Width (mm),Image Width (pt),Pixels at 300 dpi,Pixels at 500 dpi,Pixels at 1000 dpi
+Minimal size,30,85,354,591,1181
+Single column,90,255,1063,1772,3543
+1.5 column,140,397,1654,2756,5512
+Double column (full width),190,539,2244,3740,7480

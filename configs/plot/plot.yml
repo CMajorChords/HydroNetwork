@@ -1,0 +1,34 @@
+# --- Configuration file for plot ---
+
+# size of plot
+font: Times New Roman
+dpi: 1000
+style:
+  - nature
+  - no-latex
+# 图片格式
+format: JPEG
+#format: eps
+#format: svg
+# 图片颜色
+#color_list = [
+#    #cd534c,
+#    #7aa6dc,
+#    #003c67,
+#    #8f7700,
+#    #2b2d2d,
+#    #a73030,
+#    # #0073c2,
+#    # #efc000,
+#    # #868686,
+#]
+color:
+    - #cd534c
+    - #7aa6dc
+    - #003c67
+    - #f39b7f
+    - #91d1c2
+    - #80796b
+    - #5f559b
+    - #00a1d5
+    - #868686

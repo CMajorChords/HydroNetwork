@@ -1,0 +1,11 @@
+torch
+scipy
+numpy
+pandas
+xarray
+matplotlib
+tqdm
+PyYAML
+rich
+transformers
+keras
