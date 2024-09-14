@@ -1,0 +1,8 @@
+timeseries_type,min,max,scale_lower_bound,scale_upper_bound
+prcp(mm/day),0.0,1.0,0,1
+srad(W/m2),0.0,1.0,0,1
+tmax(C),0.0,1.0,0,1
+tmin(C),0.0,1.0,0,1
+vp(Pa),0.0,1.0,0,1
+streamflow,0.0,1.0,0,1
+is_rain,0.0,1.0,0,1
