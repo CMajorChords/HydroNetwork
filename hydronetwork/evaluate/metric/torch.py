@@ -1,7 +1,8 @@
-# 定义多个水文模型常用的损失函数
-from torch import Tensor, sqrt, sum
+# 定义多个水文模型常用的损失函数和类
+from torch.nn import Module
+from torch import Tensor
 from torch.nn.functional import mse_loss
-from numpy import ndarray, float64, float32
+from numpy import ndarray, float64, float32, sqrt, sum
 from pandas import Series
 from typing import Union, Sequence
 
@@ -77,3 +78,43 @@ def kge(y_pred: Union[Tensor, ndarray, Series, Sequence],
     beta = y_pred_mean / y_true_mean
     r = sum((y_pred - y_pred_mean) * (y_true - y_true_mean)) / (y_pred_std * y_true_std)
     return 1 - sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2)
+
+
+class RMSELoss(Module):
+    """
+    创建一个均方根误差损失函数。
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @staticmethod
+    def forward(y_pred: Tensor, y_true: Tensor) -> Tensor:
+        return rmse(y_pred, y_true)
+
+
+class NSELoss(Module):
+    """
+    创建一个Nash-Sutcliffe效率系数损失函数。由于NSE越接近1越好，所以这里的损失函数是1-NSE。
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @staticmethod
+    def forward(y_pred: Tensor, y_true: Tensor) -> Tensor:
+        nse_result = nse(y_pred, y_true)
+        return 1 - nse_result
+
+
+class KGELoss(Module):
+    """
+    创建一个Kling-Gupta效率系数损失函数。
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @staticmethod
+    def forward(y_pred: Tensor, y_true: Tensor) -> Tensor:
+        return kge(y_pred, y_true)

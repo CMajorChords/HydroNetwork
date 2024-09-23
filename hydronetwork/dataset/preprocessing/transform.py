@@ -86,3 +86,56 @@ def box_cox_inverse_transform(transformed_data: Union[DataFrame, Series],
     if add_small_value:
         data -= 1e-6
     return data
+
+
+class Transformer:
+    def __init__(self, data: Union[DataFrame, Series]):
+        # 初始化数据
+        self.add_one = None
+        self.lambda_values = None
+        self.add_small_value = None
+
+    def log_transform(self,
+                      data: Union[DataFrame, Series],
+                      add_one: bool = True
+                      ) -> Union[DataFrame, Series]:
+        """
+        对数据进行log变换
+        :param data: 要变换的数据，可以是DataFrame或Series
+        :param add_one: 是否对数据加1再进行变换
+        """
+        self.add_one = add_one
+        return log_transform(data, add_one=add_one)
+
+    def log_inverse_transform(self,
+                              transformed_data: Union[DataFrame, Series]
+                              ) -> Union[DataFrame, Series]:
+        """
+        对log变换后的数据进行逆变换
+        :param transformed_data: log变换后的数据，可以是DataFrame或Series
+        """
+        return log_inverse_transform(transformed_data, add_one=self.add_one)
+
+    def box_cox_transform(self,
+                          data: Union[DataFrame, Series],
+                          add_small_value: bool = False
+                          ) -> (Union[DataFrame, Series], Union[Series, float]):
+        """
+        对数据进行Box-Cox变换，注意Box-Cox变换要求数据都是正数。
+        :param data: 要变换的数据，可以是DataFrame或Series
+        :param add_small_value: 是否对数据加一个小值再进行变换
+        """
+        self.add_small_value = add_small_value
+        transformed_data, self.lambda_values = box_cox_transform(data, add_small_value=add_small_value)
+        return transformed_data
+
+    def box_cox_inverse_transform(self,
+                                  transformed_data: Union[DataFrame, Series]
+                                  ) -> Union[DataFrame, Series]:
+        """
+        对Box-Cox变换后的数据进行逆变换。
+        :param transformed_data: Box-Cox变换后的数据，可以是DataFrame或Series
+        """
+        return box_cox_inverse_transform(transformed_data,
+                                         self.lambda_values,
+                                         add_small_value=self.add_small_value)

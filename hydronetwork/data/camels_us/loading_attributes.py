@@ -2,7 +2,8 @@ from typing import List, Optional
 import pandas as pd
 from pandas import DataFrame
 from tqdm.contrib.concurrent import thread_map
-import hydronetwork.data.camels.camels_params as params
+from concurrent.futures import ThreadPoolExecutor
+import hydronetwork.data.camels_us.camels_us_params as params
 
 
 def load_single_type_attributes(attr: str,
@@ -28,6 +29,7 @@ def load_attributes(gauge_id_list: Optional[List[str]] = None,
                     attr_type_name_list: Optional[List[str]] = None,
                     root_path: str = params.camels_root_path,
                     use_attr_name: Optional[List[str]] = None,
+                    tqdm: bool = True,
                     ) -> DataFrame:
     """
     加载CAMELS数据集中指定流域的属性数据
@@ -36,20 +38,30 @@ def load_attributes(gauge_id_list: Optional[List[str]] = None,
     :param attr_type_name_list: 属性种类名称列表
     :param root_path: CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param use_attr_name: 使用的属性名称列表
+    :param tqdm: 是否显示进度条
     :return: 加载指定属性种类的所有属性数据
     """
     # 首先加载指定属性种类的属性数据
     if attr_type_name_list is None:
         attr_type_name_list = params.attributes_type_name
     len_attr_type_name_list = len(attr_type_name_list)
-    attributes = pd.concat(
-        thread_map(load_single_type_attributes,
-                   attr_type_name_list,
-                   [root_path] * len_attr_type_name_list,
-                   desc=f"正在加载{len_attr_type_name_list}类流域静态属性",
-                   total=len_attr_type_name_list,
-                   ),
-        axis=1)
+    if tqdm:
+        attributes = pd.concat(
+            thread_map(load_single_type_attributes,
+                       attr_type_name_list,
+                       [root_path] * len_attr_type_name_list,
+                       desc=f"正在加载{len_attr_type_name_list}类流域静态属性",
+                       total=len_attr_type_name_list,
+                       ),
+            axis=1)
+    else:
+        with ThreadPoolExecutor() as executor:
+            attributes = pd.concat(
+                executor.map(load_single_type_attributes,
+                             attr_type_name_list,
+                             [root_path] * len_attr_type_name_list,
+                             ),
+                axis=1)
     # 删除忽略的属性
     if use_attr_name is None:
         use_attr_name = params.use_attribute_name

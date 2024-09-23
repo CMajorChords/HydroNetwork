@@ -5,9 +5,9 @@ from xarray import Dataset
 from pandas import DataFrame
 from rich import print
 import pandas as pd
-import hydronetwork.data.camels.camels_params as params
-from hydronetwork.data.camels.loading_attributes import load_single_type_attributes
-from hydronetwork.data.camels.utils import get_gauge_id, num_workers, split_list
+import hydronetwork.data.camels_us.camels_us_params as params
+from hydronetwork.data.camels_us.loading_attributes import load_single_type_attributes
+from hydronetwork.data.camels_us.utils import get_gauge_id, num_workers, split_list
 
 
 def load_single_basin_forcing(gauge_id: str,

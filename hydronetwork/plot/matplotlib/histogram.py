@@ -4,7 +4,7 @@ from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from typing import Optional, List
+from typing import Optional
 
 
 def plot_hist_on_ax(ax: Axes,

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="gzz@10.94.33.148:2222 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="gzz@10.94.33.148:2222 password" deleteMissingItems="true" createEmptyFolders="true" filePermissions="511" folderPermissions="511" confirmBeforeUploading="false" confirmBeforeDeletion="false" showNewOnSourceInSync="false">
+    <option name="confirmBeforeDeletion" value="false" />
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="gzz@10.94.33.148:2222 password">

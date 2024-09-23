@@ -40,9 +40,12 @@ class HydroDatasetSingleBasinWithAttributes(keras.utils.PyDataset):
         super().__init__(**kwargs)
         self.lookback = lookback
         self.horizon = horizon
+        self.batch_size = batch_size
+        self.shuffle = shuffle
         self.target = timeseries[target].values
         self.attributes = attributes.values
         self.num_static_features = len(attributes.columns)
+        self.time_index = timeseries.index
         match features_lookback, features_bidirectional:
             case (None, None):
                 raise ValueError("过去特征和双向特征不能同时为空")
@@ -127,7 +130,7 @@ class HydroDatasetSingleBasinWithAttributes(keras.utils.PyDataset):
                                         start_windows_length=self.lookback,
                                         end_windows_length=self.lookback + self.horizon,
                                         )
-        return input_timeseries, self.attributes, output_target
+        return (input_timeseries, self.attributes), output_target
 
     def get_item_lookback_bidirectional(self, idx: int) -> ((ndarray, ndarray, ndarray), ndarray):
         """

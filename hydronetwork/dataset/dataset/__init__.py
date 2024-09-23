@@ -9,6 +9,14 @@ from hydronetwork.dataset.dataset.hydro_dataset_single_basin_with_attributes imp
     HydroDatasetSingleBasinWithAttributes
 from hydronetwork.dataset.dataset.hydro_dataset_single_basin_without_attributes import \
     HydroDatasetSingleBasinWithoutAttributes
+from typing import Union
+
+HydroDataset = Union[
+    HydroDatasetMultiBasinWithAttributes,
+    HydroDatasetMultiBasinWithoutAttributes,
+    HydroDatasetSingleBasinWithAttributes,
+    HydroDatasetSingleBasinWithoutAttributes
+]
 
 
 def get_dataset(timeseries: DataFrame,
@@ -20,6 +28,7 @@ def get_dataset(timeseries: DataFrame,
                 features_lookback: Optional[List[str]] = None,
                 features_bidirectional: Optional[List[str]] = None,
                 shuffle: bool = False,
+                **kwargs,
                 ) -> Union[HydroDatasetMultiBasinWithAttributes,
 HydroDatasetMultiBasinWithoutAttributes,
 HydroDatasetSingleBasinWithAttributes,
@@ -52,14 +61,16 @@ HydroDatasetSingleBasinWithoutAttributes
                                                                   batch_size=batch_size,
                                                                   shuffle=shuffle,
                                                                   features_lookback=features_lookback,
-                                                                  features_bidirectional=features_bidirectional)
+                                                                  features_bidirectional=features_bidirectional,
+                                                                  **kwargs)
             else:
                 dataset = HydroDatasetMultiBasinWithAttributes(timeseries=timeseries, target=target, lookback=lookback,
                                                                horizon=horizon, attributes=attributes,
                                                                batch_size=batch_size,
                                                                shuffle=shuffle,
                                                                features_lookback=features_lookback,
-                                                               features_bidirectional=features_bidirectional)
+                                                               features_bidirectional=features_bidirectional,
+                                                               **kwargs)
         # 如果不是MultiIndex，则为单流域数据
         else:
             if attributes is None:
@@ -70,7 +81,8 @@ HydroDatasetSingleBasinWithoutAttributes
                                                                    batch_size=batch_size,
                                                                    shuffle=shuffle,
                                                                    features_lookback=features_lookback,
-                                                                   features_bidirectional=features_bidirectional)
+                                                                   features_bidirectional=features_bidirectional,
+                                                                   **kwargs)
             else:
                 dataset = HydroDatasetSingleBasinWithAttributes(timeseries=timeseries,
                                                                 target=target,
@@ -80,7 +92,8 @@ HydroDatasetSingleBasinWithoutAttributes
                                                                 batch_size=batch_size,
                                                                 shuffle=shuffle,
                                                                 features_lookback=features_lookback,
-                                                                features_bidirectional=features_bidirectional)
+                                                                features_bidirectional=features_bidirectional,
+                                                                **kwargs)
     else:
         raise ValueError("timeseries必须是DataFrame")
     return dataset

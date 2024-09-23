@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import ndarray
+from numpy import ndarray, stack
 from typing import Iterable
 
 
@@ -38,21 +38,25 @@ def shuffle_list(*args: list,
     return ([arg[i] for i in idx] for arg in args)
 
 
-def split_single_list(arg: list, batch_size: int):
-    length = len(arg)
-    return [arg[i:min(i + batch_size, length)] for i in range(0, length, batch_size)]
+def split_single_list(list_for_split: list, batch_size: int):
+    """
+    按照顺序将list分割为多个大小为batch_size的list。
+    :param list_for_split: 需要分割的数组
+    :param batch_size: 分割的大小
+    :return: 分割后的list
+    """
+    length = len(list_for_split)
+    return [list_for_split[i:min(i + batch_size, length)] for i in range(0, length, batch_size)]
 
 
 def split_list_by_batch(*args: list,
                         batch_size: int,
-                        # drop_last: bool = False,
                         ):
     """
     将list按照batch_size分割。并保证list中的元素一一对应。
 
     :param args: 需要分割的数组
     :param batch_size: 分割的大小
-    :param drop_last: 是否丢弃最后一个batch
     :return: 分割后的list
     """
     # 检查输入的数组长度是否一致
@@ -78,6 +82,6 @@ def stack_2d_slices(data: ndarray,
     :param axis: 新建的维度
     :return: 堆积切片形成的新3D矩阵
     """
-    return np.stack([data[i + start_windows_length: i + end_windows_length]
-                     for i in index],
-                    axis=axis)
+    return stack([data[i + start_windows_length: i + end_windows_length]
+                  for i in index],
+                 axis=axis)

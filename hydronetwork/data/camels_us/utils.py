@@ -1,8 +1,8 @@
 # 创建用于处理camels数据集的工具函数
 from os import cpu_count
 from typing import List, Tuple, Union, Optional, Sequence
-import hydronetwork.data.camels.camels_params as params
-from hydronetwork.data.camels.loading_attributes import load_single_type_attributes
+import hydronetwork.data.camels_us.camels_us_params as params
+from hydronetwork.data.camels_us.loading_attributes import load_single_type_attributes
 
 num_workers = cpu_count()
 

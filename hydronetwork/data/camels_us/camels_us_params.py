@@ -1,7 +1,7 @@
 from yaml import safe_load
 from csv import reader
 
-path = "configs/camels/CAMELS_US.yml"
+path = "configs/camels_us/CAMELS_US.yml"
 with open(path, "r", encoding="utf-8") as f:
     config = safe_load(f)
 
@@ -36,11 +36,11 @@ def read_gauge_id_from_csv(csv_path):
 ignore_gauge_id = read_gauge_id_from_csv(config["ignore_gauge_id_list_path"])
 
 # CAMELS数据集中的各类特征
-features_bidirectional = ["prcp(mm/day)",
-                          "srad(W/m2)",
-                          "tmax(C)",
-                          "tmin(C)",
-                          "vp(Pa)",
-                          ]
-features_lookback = ["streamflow",
-                     ]
+# features_bidirectional = ["prcp(mm/day)",
+#                           "srad(W/m2)",
+#                           "tmax(C)",
+#                           "tmin(C)",
+#                           "vp(Pa)",
+#                           ]
+# features_lookback = ["streamflow",
+#                      ]

@@ -69,9 +69,3 @@ def kge(y_true,
     r = ops.sum((y_pred - y_pred_mean) * (y_true - y_true_mean)) / (y_pred_std * y_true_std)
 
     return 1 - ops.sqrt(ops.square(r - 1) + ops.square(alpha - 1) + ops.square(beta - 1))
-
-# Usage examples
-# model.compile(optimizer='adam', loss=rmse) # 可以使用自定义的损失函数来编译模型
-# model.compile(optimizer='adam', loss=nse)
-# model.compile(optimizer='adam', loss=mse)
-# model.compile(optimizer='adam', loss=kge)

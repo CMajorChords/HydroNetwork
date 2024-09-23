@@ -1,1 +1,1 @@
-from hydronetwork.model.EncoderDecoderLSTM import EncoderDecoderLSTM
+from hydronetwork.model.EncoderDecoderLSTM import encoder_decoder_lstm

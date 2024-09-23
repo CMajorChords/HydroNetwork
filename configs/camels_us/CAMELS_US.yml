@@ -1,9 +1,9 @@
 # --- CAMELS US configurations ---
 
 # CAMELS文件夹的路径
-#camels_root_path: /home/cmajorchords/data/camels
-#camels_root_path: D:/data/camels
-camels_root_path: /home/gzz/方正/data/camels
+#camels_root_path: /home/cmajorchords/data/camels_us
+#camels_root_path: D:/data/camels_us
+camels_root_path: /home/gzz/方正/data/CAMELS_US
 
 # 静态属性文件种类
 attributes_type_name:
@@ -58,4 +58,4 @@ ignore_precip_cols_maurer_and_nldas:
   - SWE(mm)
 
 # 要忽略的流域gauge_id
-ignore_gauge_id_list_path: configs/camels/ignore_gauge_id.csv
+ignore_gauge_id_list_path: configs/camels_us/ignore_gauge_id.csv

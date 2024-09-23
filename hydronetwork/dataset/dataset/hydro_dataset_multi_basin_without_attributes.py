@@ -37,7 +37,10 @@ class HydroDatasetMultiBasinWithoutAttributes(keras.utils.PyDataset):
         super().__init__(**kwargs)
         self.lookback = lookback
         self.horizon = horizon
+        self.batch_size = batch_size
+        self.shuffle = shuffle
         self.target = timeseries[target].values
+        self.time_index = timeseries.index
         match features_lookback, features_bidirectional:
             case (None, None):
                 raise ValueError("过去特征和双向特征不能同时为空")

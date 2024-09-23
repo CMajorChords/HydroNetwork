@@ -116,7 +116,7 @@ def split_timeseries(data: [DataFrame, Series],
                                  )  # 划分时间序列数据集为多个子集
         split_data = zip(*split_data)  # 将每个时间段的数据集合并成一个tuple
 
-        # 将tuple中的数据集合并成一个DataFrame，index为multiindex，第一层为流域id，第二层为时间，注意用data_group_by_basin的keys
+        # 将tuple中的数据集合并成一个DataFrame，index为multiindex，第一层为流域id，第二层为时间
         def concat_data(data_iter, keys):
             return concat(data_iter, keys=keys, axis=0)
 

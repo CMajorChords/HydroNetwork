@@ -68,7 +68,16 @@ def denormalize(data: Union[DataFrame, Series],
             data = data[use_cols]
             scale_params = scale_params.loc[use_cols]
         except KeyError:
-            raise ValueError('在数据或归一化参数中挑选指定use_cols时出错')
+            raise ValueError(
+                f"数据的columns和归一化参数的index不一致，数据的columns为{use_cols}，归一化参数的index为{scale_params.index}")
+    else:
+        try:
+            use_cols = data.columns if isinstance(data, DataFrame) else [data.name]
+            scale_params = scale_params.loc[use_cols]
+        except KeyError:
+            scale_cols = scale_params.index
+            raise ValueError(
+                f"数据的columns和归一化参数的index不一致，数据的columns为{use_cols}，归一化参数的index为{scale_cols}")
     # 如果数据是DataFrame，即有多个特征，则需要判断数据的columns和归一化参数的index是否一致
     if isinstance(data, DataFrame) and not data.columns.equals(scale_params.index):
         raise ValueError('数据的columns和归一化参数的index不一致')
