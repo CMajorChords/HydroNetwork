@@ -34,6 +34,8 @@ class RunoffRouting(Layer):
         self.softmax = SoftmaxNormalization(axis=-1)
         self.linear_normalization = LinearNormalization(axis=-1)
         self.hydrograph_length = max([max(last_layer_units) for last_layer_units in time_soil_layer_routing.values()])
+        # 只有一部分时间的产流量最终会被计算到0:horizon的径流中，我们只需要计算lookback-hydrograph_length:lookback+horizon的径流即可
+        self.compute_length = horizon + self.hydrograph_length
 
     def call(self,
              runoff,  # size=batch_size*T*m*n
@@ -44,6 +46,7 @@ class RunoffRouting(Layer):
         :return: 汇流后的产流量序列，size=batch_size*T*(surface_routing_time * aspect_ratio^n_soil_layers)
             T表示时间步数，每个时间步的产流都会被转成一条序列，序列的长度取决于最下层土壤的汇流时间。
         """
+        runoff = runoff[:, -self.compute_length:, :]  # size=batch_size*compute_length*m*n
         unit_hydrographs = []
         for n_soil_layer in range(self.n_soil_layers):
             layer_runoff = runoff[:, :, n_soil_layer].squeeze()  # size=batch_size*T*n
@@ -61,4 +64,11 @@ class RunoffRouting(Layer):
             unit_hydrographs.append(hydrograph)
         # unit_hydrographs中有n_soil_layers个元素，每个元素的size为batch_size*T*hydrograph_length
         # 将每个元素都相加在一起，得到最终的产流量序列
-        return ops.sum(unit_hydrographs, axis=0)  # size=batch_size*T*hydrograph_length
+        flow = ops.sum(unit_hydrographs, axis=0)  # size=batch_size*T*hydrograph_length
+        # 将flow的维度转换为size=batch_size*(2*hydrograph_length+horizon)
+
+
+    def get_config(self):
+        return {'horizon': self.horizon,
+                'time_soil_layer_routing': self.time_soil_layer_routing,
+                'n_soil_divisions': self.n_soil_divisions}
