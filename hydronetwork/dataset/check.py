@@ -119,11 +119,14 @@ def check_consecutive_nas(data: Union[DataFrame, Series], threshold: int = 10) -
     :param threshold: 连续缺失值的阈值
     :return: 返回一个DataFrame，其中index是一个multiindex，level为(列名, 起始时间)，columns为[结束时间，连续缺失值长度]
     """
-    if isinstance(data, DataFrame):
-        check_result = check_consecutive_na_in_dataframe(data=data, threshold=threshold)
-    else:
-        check_result = check_consecutive_na_in_series(data=data, threshold=threshold)
-    return check_result.astype({"start_time": "datetime64[ns]", "end_time": "datetime64[ns]", "length": "int"})
+    try:
+        if isinstance(data, DataFrame):
+            check_result = check_consecutive_na_in_dataframe(data=data, threshold=threshold)
+        else:
+            check_result = check_consecutive_na_in_series(data=data, threshold=threshold)
+        return check_result.astype({"start_time": "datetime64[ns]", "end_time": "datetime64[ns]", "length": "int"})
+    except KeyError:
+        print("当前数据集中不存在连续缺失值")
 
 
 def check_multiindex(data: Union[DataFrame, Series]) -> bool:

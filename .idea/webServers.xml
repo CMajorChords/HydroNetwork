@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="b99abd6f-d3e9-4ae0-aa66-153ddb83a72c" name="606">
+        <fileTransfer rootFolder="/home/gzz" accessType="SFTP" host="10.94.33.148" port="2222" sshConfigId="37737b1a-350c-41f4-b109-cc76112651e5" sshConfig="gzz@10.94.33.148:2222 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" isUseSudo="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

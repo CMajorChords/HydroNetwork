@@ -4,6 +4,13 @@
     <option name="confirmBeforeDeletion" value="false" />
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="606">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/pythonProjects/HydroNetwork" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="gzz@10.94.33.148:2222 password">
         <serverdata>
           <mappings>
