@@ -31,45 +31,59 @@ class WaterMixHead(Layer):
         self.n_layers = n_layers
         self.n_divisions = n_divisions
         self.n_mix_steps = n_mix_steps
-        self.normalization = LinearNormalization(axis=[-2, -1])
 
-        # 动态调整混合的次数
+        self.conv = []
+        self.attention = []
+        self.relu = layers.ReLU()
         for i in range(n_mix_steps):
-            setattr(self, f"conv{i}", layers.DepthwiseConv1D(kernel_size=2))
-            setattr(self, f"attention{i}", SelfAttention())
-            setattr(self, f"relu{i}", layers.ReLU())
+            self.conv.append(layers.DepthwiseConv1D(kernel_size=2))
+            self.attention.append(SelfAttention())
 
-        assert activation in ["tanh", "softmax", "linear_normalize"], "激活函数必须是tanh、softmax或normalization"
+        assert activation in ["sigmoid", "softmax", "linear_normalize"], "激活函数必须是sigmoid、softmax或normalization"
         self.activation = activation
-        if activation == "tanh":
-            self.normalization = activations.tanh
+        if activation == "sigmoid":
+            self.normalization = activations.sigmoid
         elif activation == "softmax":
-            self.normalization = SoftmaxNormalization(axis=[-2, -1])
-        elif activation == "normalization":
-            self.normalization = LinearNormalization(axis=[-2, -1])
+            self.normalization = SoftmaxNormalization(axis=[-1, -2])
+        else:
+            self.normalization = LinearNormalization(axis=[-1, -2])
+
+    # def build(self, input_shape):
 
     def call(self,
-             soil_water,  # size=batch_size*(m+1)*n
-             precipitation,  # size=batch_size*n
+             soil_water,  # size=batch_size*m*n
+             precipitation,  # size=batch_size*1*n
              ):
         for i in range(self.n_mix_steps):
             soil_water = ops.concatenate([soil_water, precipitation], axis=-2)  # size=batch_size*(m+1)*n
             # 垂向混合
-            soil_water = getattr(self, f"conv{i}")(soil_water)  # size=batch_size*(m+1)*n -> size=batch_size*m*n
+            soil_water = self.conv[i](soil_water)  # size=batch_size*(m+1)*n -> size=batch_size*m*n
             # 横向混合，需要首先将m*n转换为n*m
-            soil_water = ops.transpose(soil_water, perm=[0, 2, 1])  # size=batch_size*n*m
-            soil_water = getattr(self, f"attention{i}")(soil_water)  # size=batch_size*n*m
-            soil_water = ops.transpose(soil_water, perm=[0, 2, 1])  # size=batch_size*m*n
+            soil_water = ops.transpose(soil_water, axes=[0, 2, 1])  # size=batch_size*n*m
+            soil_water = self.attention[i](soil_water)  # size=batch_size*n*m
+            soil_water = ops.transpose(soil_water, axes=[0, 2, 1])  # size=batch_size*m*n
             # 激活函数，注意最后一次混合不需要激活函数
             if i < self.n_mix_steps - 1:
-                soil_water = getattr(self, f"relu{i}")(soil_water)
+                soil_water = self.relu(soil_water)
         # 归一化
         return self.normalization(soil_water)
 
     def get_config(self):
-        config = super(WaterMixHead, self).get_config()
-        config.update({"n_layers": self.n_layers,
-                       "n_divisions": self.n_divisions,
-                       "activation": self.activation,
-                       "n_mix_steps": self.n_mix_steps})
-        return config
+        return {"n_layers": self.n_layers,
+                "n_divisions": self.n_divisions,
+                "activation": self.activation,
+                "n_mix_steps": self.n_mix_steps}
+
+# %%测试层
+import numpy as np
+
+soil_water = np.random.random((2, 3, 4))
+precipitation = np.ones((2, 1, 4))
+
+layer_sigmoid = WaterMixHead(n_layers=3, n_divisions=4, activation="sigmoid")
+layer_softmax = WaterMixHead(n_layers=3, n_divisions=4, activation="softmax")
+layer_linear = WaterMixHead(n_layers=3, n_divisions=4, activation="linear_normalize")
+
+output_sigmoid = layer_sigmoid(soil_water, precipitation)
+output_softmax = layer_softmax(soil_water, precipitation)
+output_linear = layer_linear(soil_water, precipitation)

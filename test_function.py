@@ -10,7 +10,7 @@ def piecewise_exponential(x, mu, a, k1, k2):
     return np.where(x <= mu, a * np.exp(k1 * (x - mu)), a * np.exp(k2 * (x - mu)))
 
 # 参数设定
-mu = 7      # 峰值位置
+mu = 6      # 峰值位置
 a = 1        # 峰值高度
 sigma = 20    # 高斯分布的标准差
 p = 2        # 对称模型控制参数 (>2表示向左偏态)

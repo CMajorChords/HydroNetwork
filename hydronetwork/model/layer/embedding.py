@@ -31,3 +31,11 @@ class Embedding(Layer):
 
     def call(self, features):
         return self.embedding(features) + self.residual(features)
+
+# %% 测试层
+# [batch_size, num_features] -> [batch_size, 1]
+# import numpy as np
+#
+# inputs = np.random.random((32, 10))
+# embedding = Embedding()
+# outputs = embedding(inputs)
