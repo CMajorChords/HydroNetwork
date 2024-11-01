@@ -9,9 +9,9 @@ class RunoffProducingCell(Layer):
     """
     产流模型单个时间步的计算单元。
     产流模型的输入为：
-    1.上一个时间步输出的土壤含水量比例，size=m*n，m为土壤层的数量，n为按照土壤蓄水容量将土壤在纵向上划分的层数
-    2.本时间步的降雨量，size=1
-    3.本时间步的潜在蒸散发量，size=1（可能是一些和潜在蒸散发量相关的变量，如温度、湿度，而不是直接的潜在蒸散发量，所以需要一个embedding层）
+    1.上一个时间步输出的土壤含水量比例，shape: [batch_size, m, n]
+    2.本时间步的降雨量，shape: [batch_size, 1]
+    3.本时间步的潜在蒸散发量，shape: [batch_size, 1]
 
     计算过程：
     1.前处理
@@ -52,15 +52,9 @@ class RunoffProducingCell(Layer):
         self.water_capacity = water_capacity
         # 设置水量混合头部
         self.n_mix_steps = n_mix_steps
-        self.water_mix_head = WaterMixHead(n_layers=3, n_divisions=3,
-                                           activation="sigmoid",
-                                           n_mix_steps=n_mix_steps)
-        self.infiltration_mix = WaterMixHead(n_layers=3, n_divisions=3,
-                                             activation="softmax",
-                                             n_mix_steps=n_mix_steps)
-        self.evaporation_mix = WaterMixHead(n_layers=3, n_divisions=3,
-                                            activation="softmax",
-                                            n_mix_steps=n_mix_steps)
+        self.water_mix_head = WaterMixHead(m=3, n=3, activation="sigmoid", n_mix_steps=n_mix_steps)
+        self.infiltration_mix = WaterMixHead(m=3, n=3, activation="softmax", n_mix_steps=n_mix_steps)
+        self.evaporation_mix = WaterMixHead(m=3, n=3, activation="softmax", n_mix_steps=n_mix_steps)
 
     def call(self,
              last_soil_water_ratio: KerasTensor,
@@ -159,4 +153,3 @@ result = cell(last_soil_water_ratio, precipitation, evaporation)
 # 计算evaporation_ratio之和
 # evaporation_ratio_sum = infiltration_ratio.sum(dim=(1, 2), keepdim=False)
 # TODO soil_water_ratio所有的元素都变成了0.5，这是不对的
-

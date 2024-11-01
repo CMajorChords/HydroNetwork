@@ -50,14 +50,13 @@ class SelfAttention(Layer):
                         self.w_value,
                         )  # [batch_size, time_steps, num_features] -> [batch_size, time_steps, num_features]
 
-        # 直接得到注意力机制作用后的张量
+        # 直接得到注意力机制作用后的
         return self.attention([query, value, key])
 
-
-# %% 测试层
-# [batch_size, time_steps, num_features] -> [batch_size, time_steps, num_features]
+# %% 测试层 已测试通过
 # import numpy as np
+# from hydronetwork.utils import tensor2numpy
 #
-# inputs = np.random.randn(32, 13, 4)
-#
+# inputs = np.random.random((2, 3, 4))
 # outputs = SelfAttention()(inputs)
+# outputs = tensor2numpy(outputs)

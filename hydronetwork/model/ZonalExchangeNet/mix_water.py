@@ -9,36 +9,38 @@ class WaterMixHead(Layer):
     """
     水量混合头部，用于将不同的水量进行混合。
     1.单次混合操作包括：
-        1.1 垂向混合：利用大小为2*n的卷积核将纵向上相邻的两层土壤含水量进行卷积运算(无padding, stride=1)
-            size=batch_size*(m+1)*n -> size=batch_size*m*n
+        1.1 concat：将降水量与土壤含水量进行拼接
+            shape: (batch_size, m, n), (batch_size, 1, n) -> (batch_size, m+1, n)
+        1.2 垂向混合：利用大小为2*n的卷积核将纵向上相邻的两层土壤含水量进行卷积运算(无padding, stride=1)
+            shape: (batch_size, m+1, n) -> (batch_size, m, n)
         1.3 横向混合：利用attention机制将m个土壤层的水量进行横向混合，size=m*n
-    2. 进行多次混合操作，每一次混合操作都包含一次垂向混合、一次通道混合和一次横向混合。每次混合参数并不共享。
+            shape: (batch_size, m, n) -> (batch_size, m, n)
+    2. 进行多次混合操作，每一次混合操作都包含一次垂向混合、一次通道混合和一次横向混合。每次混合参数共享。
     3. 最后使用激活函数进行归一化，让每一个元素都在0-1之间。
 
-    :param n_layers: 土壤层数
-    :param n_divisions: 土壤纵向划分层数
-    :param activation: 激活函数，可以是'tanh'、'softmax'、'normalization'
-    :param n_mix_steps: 水量混合步数，默认为3。每一步都包含一次垂向混合、一次通道混合和一次横向混合。每一步共用同一套参数。
+    :param m: 土壤层数
+    :param n: 土壤纵向划分层数
+    :param activation: 激活函数，可以是'sigmoid'、'softmax'、'normalization'
+    :param n_mix_steps: 水量混合步数，默认为3。每一步都包含一次垂向混合、一次通道混合和一次横向混合。每一步用的参数不共享。
     """
 
     def __init__(self,
-                 n_layers: int,
-                 n_divisions: int,
+                 m: int,
+                 n: int,
                  activation: str,
                  n_mix_steps: int = 3,
                  **kwargs):
         super(WaterMixHead, self).__init__(**kwargs)
-        self.n_layers = n_layers
-        self.n_divisions = n_divisions
+        self.m = m
+        self.n = n
         self.n_mix_steps = n_mix_steps
-
         self.conv = []
         self.attention = []
         self.relu = layers.ReLU()
         for i in range(n_mix_steps):
             self.conv.append(layers.DepthwiseConv1D(kernel_size=2))
             self.attention.append(SelfAttention())
-
+        # 激活函数，这在确定百分比时很重要。
         assert activation in ["sigmoid", "softmax", "linear_normalize"], "激活函数必须是sigmoid、softmax或normalization"
         self.activation = activation
         if activation == "sigmoid":
@@ -46,7 +48,7 @@ class WaterMixHead(Layer):
         elif activation == "softmax":
             self.normalization = SoftmaxNormalization(axis=[-1, -2])
         else:
-            self.normalization = LinearNormalization(axis=[-1, -2])
+            self.normalization = LinearNormalization(axis=[-1, -2], add_relu=True)
 
     # def build(self, input_shape):
 
@@ -69,21 +71,21 @@ class WaterMixHead(Layer):
         return self.normalization(soil_water)
 
     def get_config(self):
-        return {"n_layers": self.n_layers,
-                "n_divisions": self.n_divisions,
+        return {"m": self.m,
+                "n": self.n,
                 "activation": self.activation,
                 "n_mix_steps": self.n_mix_steps}
 
-# %%测试层
-import numpy as np
-
-soil_water = np.random.random((2, 3, 4))
-precipitation = np.ones((2, 1, 4))
-
-layer_sigmoid = WaterMixHead(n_layers=3, n_divisions=4, activation="sigmoid")
-layer_softmax = WaterMixHead(n_layers=3, n_divisions=4, activation="softmax")
-layer_linear = WaterMixHead(n_layers=3, n_divisions=4, activation="linear_normalize")
-
-output_sigmoid = layer_sigmoid(soil_water, precipitation)
-output_softmax = layer_softmax(soil_water, precipitation)
-output_linear = layer_linear(soil_water, precipitation)
+# %%测试层 已通过测试
+# import numpy as np
+#
+# soil_water = np.random.rand(2, 3, 4)
+# precipitation = np.random.rand(2, 1, 4)
+#
+# layer_sigmoid = WaterMixHead(m=3, n=4, activation="sigmoid")
+# layer_softmax = WaterMixHead(m=3, n=4, activation="softmax")
+# layer_linear = WaterMixHead(m=3, n=4, activation="linear_normalize")
+#
+# output_sigmoid = layer_sigmoid(soil_water, precipitation).cpu().detach().numpy()
+# output_softmax = layer_softmax(soil_water, precipitation).cpu().detach().numpy()
+# output_linear = layer_linear(soil_water, precipitation).cpu().detach().numpy()

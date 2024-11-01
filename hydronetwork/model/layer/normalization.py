@@ -10,12 +10,18 @@ class LinearNormalization(Layer):
     :param axis: 归一化的轴，-1表示对最后一个维度进行归一化，{-1, -2}表示对倒数两个维度进行归一化
     """
 
-    def __init__(self, axis, **kwargs):
+    def __init__(self,
+                 axis,
+                 add_relu=False,
+                 **kwargs):
         assert axis == -1 or axis == [-1, -2], "axis必须是-1或者[-1, -2]"
         super(LinearNormalization, self).__init__(**kwargs)
+        self.add_relu = add_relu
         self.axis = axis
 
     def call(self, inputs):  # inputs: [batch_size, feature_size]
+        if self.add_relu:
+            inputs = ops.relu(inputs)
         return inputs / ops.sum(inputs, axis=self.axis, keepdims=True)
 
     def get_config(self):
@@ -41,7 +47,7 @@ class SoftmaxNormalization(Layer):
     def get_config(self):
         return {'axis': self.axis}
 
-# %%测试层
+# %%测试层 已通过测试
 # import numpy as np
 #
 # # 测试LinearNormalization和SoftmaxNormalization
@@ -66,4 +72,3 @@ class SoftmaxNormalization(Layer):
 # # 将每一个元素的值相加，应该得到1
 # print(outputs_linear_2d.sum(axis=(-1, -2)))
 # print(outputs_softmax_2d.sum(axis=(-1, -2)))
-
