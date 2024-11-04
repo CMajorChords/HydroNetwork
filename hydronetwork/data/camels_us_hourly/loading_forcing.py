@@ -121,6 +121,7 @@ def load_forcing(gauge_id: Optional[Union[str, List[str]]] = None,
                  root_path: str = camels_us_hourly_root_path,
                  multi_process: bool = False,
                  to_xarray: bool = False,
+                 astype: str = "float32",
                  ) -> Union[DataFrame, Dataset]:
     """
     加载CAMELS数据集中指定流域的气象强迫数据
@@ -129,18 +130,19 @@ def load_forcing(gauge_id: Optional[Union[str, List[str]]] = None,
     :param root_path:CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param multi_process:是否使用多进程，仅对多个流域有效
     :param to_xarray:是否转换为xarray格式，仅对多个流域有效
+    :param astype:数据类型，默认为"float32"
     :return:指定流域的气象强迫数据
     """
     if gauge_id is None:
         return load_basins_forcing(gauge_id_list=None,
                                    root_path=root_path,
                                    multi_process=multi_process,
-                                   to_xarray=to_xarray)
+                                   to_xarray=to_xarray).astype(astype)
     elif isinstance(gauge_id, str):
         return load_single_basin_forcing(gauge_id=gauge_id,
-                                         root_path=root_path)
+                                         root_path=root_path).astype(astype)
     elif isinstance(gauge_id, list):
         return load_basins_forcing(gauge_id_list=gauge_id,
                                    root_path=root_path,
                                    multi_process=multi_process,
-                                   to_xarray=to_xarray)
+                                   to_xarray=to_xarray).astype(astype)

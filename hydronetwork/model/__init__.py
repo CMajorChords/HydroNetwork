@@ -1,1 +1,2 @@
 from hydronetwork.model.EncoderDecoderLSTM import encoder_decoder_lstm
+from hydronetwork.model.zonal_exchange_net.zonal_exchange_model import ZonalExchangeNet

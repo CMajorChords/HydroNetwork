@@ -130,6 +130,7 @@ def load_streamflow(gauge_id: Optional[Union[str, List[str]]] = None,
                     multi_process: bool = False,
                     to_xarray: bool = False,
                     unit="m^3/s",
+                    astype="float32",
                     ) -> Union[DataFrame, Dataset]:
     """
     加载CAMELS数据集中所有流域的流量数据
@@ -139,6 +140,7 @@ def load_streamflow(gauge_id: Optional[Union[str, List[str]]] = None,
     :param multi_process:是否使用多进程，仅对多个流域有效
     :param to_xarray:是否转换为xarray格式，仅对多个流域有效
     :param unit:流量单位，默认为"m^3/s"，可以为"mm/h"
+    :param astype:数据类型，默认为"float32"
     :return:指定流域的流量数据
     """
     if unit not in ("m^3/s", "mm/h"):
@@ -148,15 +150,15 @@ def load_streamflow(gauge_id: Optional[Union[str, List[str]]] = None,
                                       root_path=root_path,
                                       multi_process=multi_process,
                                       to_xarray=to_xarray,
-                                      unit=unit, )
+                                      unit=unit, ).astype(astype)
     elif isinstance(gauge_id, str):
         return load_single_basin_streamflow(gauge_id,
                                             root_path=root_path,
                                             unit=unit,
-                                            )
+                                            ).astype(astype)
     elif isinstance(gauge_id, list):
         return load_basins_streamflow(gauge_id_list=gauge_id,
                                       root_path=root_path,
                                       multi_process=multi_process,
                                       to_xarray=to_xarray,
-                                      unit=unit, )
+                                      unit=unit, ).astype(astype)

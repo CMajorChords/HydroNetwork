@@ -32,3 +32,11 @@ def diagonal_sum(matrix):
 # print(f"x: {x}")
 # y = diagonal_sum(x)
 # print(f"y: {y.cpu()}")
+
+# %%一个更好的单位先设置：脉冲响应函数
+# 定义脉冲响应函数 h(x,t)
+import numpy as np
+def pulse_response(x, t, C, D):
+    part1 = x / (2 * t * np.sqrt(np.pi * D * t))
+    part2 = np.exp(-((C * t - x) ** 2) / (4 * D * t))
+    return part1 * part2

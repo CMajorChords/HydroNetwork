@@ -1,6 +1,7 @@
 # embedding
 import keras
 from keras import layers, Layer
+from hydronetwork.model.layer.normalization import LinearNormalization
 
 
 @keras.saving.register_keras_serializable(package='Custom', name='Embedding')
@@ -17,7 +18,7 @@ class Embedding(Layer):
                  layer_units: list[int] = (32, 16, 1),
                  last_activation: str = "relu",
                  **kwargs):
-        super(Embedding, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         # 检查神经元数量是否为int
         dense_layers = []
         # 按照layer_units创建神经网络，不要把最后一层的激活函数添加进去
@@ -27,20 +28,22 @@ class Embedding(Layer):
         dense_layers.append(layers.Dense(layer_units[-1]))
         self.embedding = keras.Sequential(dense_layers)
         self.residual = layers.Dense(layer_units[-1])
-        self.last_activation = layers.Activation(last_activation)
+        if last_activation == "linear_normalize":
+            self.last_activation = LinearNormalization(axis=-1)
+        else:
+            self.last_activation = layers.Activation(last_activation)
 
     def call(self, features):
         output = self.embedding(features) + self.residual(features)
         return self.last_activation(output)
 
-
 # %% 测试层 已通过测试
 
 # [batch_size, num_features] -> [batch_size, 1]
-import numpy as np
-from hydronetwork.utils import tensor2numpy
-
-input = np.random.random((32, 10))
-embedding = Embedding()
-output = embedding(input)
-output = tensor2numpy(output)
+# import numpy as np
+# from hydronetwork.utils import tensor2numpy
+#
+# input = np.random.random((32, 10))
+# embedding = Embedding()
+# output = embedding(input)
+# output = tensor2numpy(output)

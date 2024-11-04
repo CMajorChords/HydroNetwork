@@ -44,7 +44,7 @@ def nse(y_true,
     :return: Nash-Sutcliffe效率系数
     """
     y_true_mean = ops.mean(y_true)
-    return ops.sum(ops.square(y_pred - y_true)) / ops.sum(ops.square(y_true - y_true_mean))
+    return ops.sum(ops.square(y_pred - y_true)) / ops.sum(ops.square(y_true - y_true_mean)) - 1  # 最小化这个值，所以加负号
 
 
 def kge(y_true,

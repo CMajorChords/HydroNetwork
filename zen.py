@@ -1,4 +1,4 @@
-# ZonalExchangeNet: 使用神经网络建模降雨径流过程
+# zonal_exchange_net: 使用神经网络建模降雨径流过程
 # %load_ext autoreload
 # %autoreload 2
 from hydronetwork.data import camels_us as camels
@@ -18,7 +18,7 @@ dataset_config = {"lookback": 365,
 train_set, val_set = get_dataset(train_set, **dataset_config), get_dataset(val_set, **dataset_config)
 
 # %%模型构建
-from hydronetwork.model.ZonalExchangeNet.produce_runoff import RunoffProducingCell
+from hydronetwork.model.zonal_exchange_net.produce_runoff import RunoffProducingCell
 
 
 

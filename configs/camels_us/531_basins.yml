@@ -50,8 +50,8 @@ bidirectional_stacked_forecast_lstm: False
 #    - 30
 #    - 20
 #    - 64
-#  # activation function of embedding network
-#  activation: tanh
+#  # normalization function of embedding network
+#  normalization: tanh
 #  # dropout applied to embedding network
 #  dropout: 0.0
 # prediction head [regression, mdn, umal]. Define the head specific parameters below
