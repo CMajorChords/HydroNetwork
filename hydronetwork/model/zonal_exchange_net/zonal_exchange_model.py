@@ -37,13 +37,11 @@ class ZonalExchangeNet(Model):
         self.runoff_producing = ZENRunoffProducing(m=m, n=n, water_capacity_max=water_capacity_max)
 
     def call(self,
-             # precipitation,  # size=batch_size*T
-             # potential_evaporation,  # size=batch_size*T
              inputs  # size=batch_size*T*2
              ):
         precipitation = inputs[:, :, 0]
-        potential_evaporation = inputs[:, :, 1]
+        evaporation_features = inputs[:, :, 1:]
         # 计算产流过程
-        runoff = self.runoff_producing(precipitation, potential_evaporation)
+        runoff = self.runoff_producing(precipitation, evaporation_features)
         # 计算汇流过程
         return self.confluence(runoff)

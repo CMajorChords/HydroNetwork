@@ -17,6 +17,7 @@ def load_single_basin_timeseries(gauge_id: str,
                                  root_path: str = params.camels_root_path,
                                  source: str = params.forcing_source,
                                  ignore_columns: Optional[List[str]] = None,
+                                 unit: str = "m^3/s",
                                  ) -> DataFrame:
     """
     加载单个流域的气象强迫和流量数据
@@ -26,10 +27,11 @@ def load_single_basin_timeseries(gauge_id: str,
     :param root_path: CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param source: 降水数据来源, 默认为"daymet", 可选值为"daymet"、“maurer"和”nldas"
     :param ignore_columns: 忽略的列名列表
+    :param unit: 流量单位，默认为"m^3/s"，可以为"mm/day"
     :return: 单个流域的气象强迫和流量数据
     """
     forcing = load_single_basin_forcing(gauge_id, huc_02, root_path, source, ignore_columns)
-    streamflow = load_single_basin_streamflow(gauge_id, huc_02, root_path)
+    streamflow = load_single_basin_streamflow(gauge_id=gauge_id, huc_02=huc_02, root_path=root_path, unit=unit)
     timeseries = pd.concat([forcing, streamflow], axis=1)
     timeseries.columns.name = "timeseries_type"
     return timeseries
@@ -40,6 +42,7 @@ def load_basins_timeseries_with_threads(gauge_id_list: List[str],
                                         root_path: str,
                                         source: str,
                                         ignore_columns: Optional[List[str]],
+                                        unit: str = "m^3/s",
                                         tqdm: bool = True,
                                         ) -> DataFrame:
     """
@@ -50,6 +53,7 @@ def load_basins_timeseries_with_threads(gauge_id_list: List[str],
     :param root_path: CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param source: 降水数据来源, 默认为"daymet", 可选值为"daymet"、“maurer"和”nldas"
     :param ignore_columns: 忽略的列名列表
+    :param unit: 流量单位，默认为"m^3/s"，可以为"mm/day"
     :param tqdm: 是否显示进度条
     :return: 所有流域的气象强迫和流量数据
     """
@@ -61,6 +65,7 @@ def load_basins_timeseries_with_threads(gauge_id_list: List[str],
                        [root_path] * len_gauge_id_list,
                        [source] * len_gauge_id_list,
                        [ignore_columns] * len_gauge_id_list,
+                       [unit] * len_gauge_id_list,
                        desc=f"正在加载{len_gauge_id_list}个流域的气象强迫和流量数据",
                        total=len_gauge_id_list,
                        leave=True,
@@ -77,6 +82,7 @@ def load_basins_timeseries_with_threads(gauge_id_list: List[str],
                              [root_path] * len_gauge_id_list,
                              [source] * len_gauge_id_list,
                              [ignore_columns] * len_gauge_id_list,
+                             [unit] * len_gauge_id_list,
                              ),
                 keys=gauge_id_list,
                 names=["gauge_id", "datetime"],
@@ -88,6 +94,7 @@ def load_basins_timeseries(gauge_id_list: Optional[List[str]] = None,
                            root_path: str = params.camels_root_path,
                            source: str = params.forcing_source,
                            ignore_columns: Optional[List[str]] = None,
+                           unit: str = "m^3/s",
                            multi_process: bool = False,
                            to_xarray: bool = False,
                            ) -> Union[DataFrame, Dataset]:
@@ -98,6 +105,7 @@ def load_basins_timeseries(gauge_id_list: Optional[List[str]] = None,
     :param root_path: CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param source: 降水数据来源, 默认为"daymet", 可选值为"daymet"、“maurer"和”nldas"
     :param ignore_columns: 忽略的列名列表
+    :param unit: 流量单位，默认为"m^3/s"，可以为"mm/day"
     :param multi_process: 是否使用多进程
     :param to_xarray: 是否转换为xarray格式
     :return: 所有流域的气象强迫和流量数据
@@ -121,6 +129,7 @@ def load_basins_timeseries(gauge_id_list: Optional[List[str]] = None,
                              [root_path] * num_workers,
                              [source] * num_workers,
                              [ignore_columns] * num_workers,
+                             [unit] * num_workers,
                              [False] * num_workers,  # tqdm
                              ),
                 axis=0,
@@ -138,7 +147,8 @@ def load_basins_timeseries(gauge_id_list: Optional[List[str]] = None,
         #                    axis=0,
         #                    )
     else:
-        result = load_basins_timeseries_with_threads(gauge_id_list, huc_02_list, root_path, source, ignore_columns)
+        result = load_basins_timeseries_with_threads(gauge_id_list, huc_02_list, root_path, source, ignore_columns,
+                                                     unit)
     if to_xarray:
         result = result.to_xarray()
     return result
@@ -148,6 +158,7 @@ def load_timeseries(gauge_id: Optional[Union[str, List[str]]] = None,
                     root_path: str = params.camels_root_path,
                     source: str = params.forcing_source,
                     ignore_columns: Optional[List[str]] = None,
+                    unit: str = "m^3/s",
                     multi_process: bool = False,
                     to_xarray: bool = False,
                     ) -> Union[DataFrame, Dataset]:
@@ -158,6 +169,7 @@ def load_timeseries(gauge_id: Optional[Union[str, List[str]]] = None,
     :param root_path: CAMELS数据集根目录，默认为"camels_params"中的root_path
     :param source: 降水数据来源, 默认为"daymet", 可选值为"daymet"、“maurer"和”nldas"
     :param ignore_columns: 忽略的列名列表
+    :param unit: 流量单位，默认为"m^3/s"，可以为"mm/day"
     :param multi_process: 是否使用多进程, 仅对多个流域有效
     :param to_xarray: 是否转换为xarray格式, 仅对多个流域有效
     :return: 指定流域的气象强迫和流量数据
@@ -168,16 +180,19 @@ def load_timeseries(gauge_id: Optional[Union[str, List[str]]] = None,
                                       source=source,
                                       ignore_columns=ignore_columns,
                                       multi_process=multi_process,
-                                      to_xarray=to_xarray)
+                                      to_xarray=to_xarray,
+                                      unit=unit)
     elif isinstance(gauge_id, str):
         return load_single_basin_timeseries(gauge_id,
                                             root_path=root_path,
                                             source=source,
-                                            ignore_columns=ignore_columns)
+                                            ignore_columns=ignore_columns,
+                                            unit=unit)
     elif isinstance(gauge_id, list):
         return load_basins_timeseries(gauge_id_list=gauge_id,
                                       root_path=root_path,
                                       source=source,
                                       ignore_columns=ignore_columns,
                                       multi_process=multi_process,
-                                      to_xarray=to_xarray)
+                                      to_xarray=to_xarray,
+                                      unit=unit)

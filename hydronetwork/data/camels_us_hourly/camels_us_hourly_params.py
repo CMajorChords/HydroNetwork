@@ -56,6 +56,7 @@ def get_basins_area(source: str = "GAGESII") -> Series:
     """
     获取所有流域的面积
 
+    :param source: 面积数据来源，可选"GAGESII"或"Geospatial Fabric"
     :return: 流域面积
     """
     if source == "GAGESII":

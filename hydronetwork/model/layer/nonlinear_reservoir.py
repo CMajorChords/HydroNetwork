@@ -14,8 +14,8 @@ class NonlinearReservoirCell(Layer):
     2. 由产流量分别计算每一层的汇流量比例。这一步将使用m个神经网络，每个神经网络的输出是一个shape为(batch_size, 1)的张量。
         单个神经网络计算前后的shape变化为(batch_size, 1, n) -> (batch_size, 1)
         shape: (batch_size, m, n) -> (batch_size, m)
-    3. 将汇流量比例加与自由水状态相乘，得到本时段每一层的汇流量
-        shape: (batch_size, m) * (batch_size, m) -> (batch_size, m)
+    3. 将汇流量比例与自由水状态、上一时段的汇流量相乘，得到本时段的汇流量。
+        shape: (batch_size, m) * (batch_size, m) + (batch_size, m) * (batch_size, m) -> (batch_size, m)
     4. 更新自由水状态
         shape: (batch_size, m) - (batch_size, m) -> (batch_size, m)
 
@@ -40,6 +40,7 @@ class NonlinearReservoirCell(Layer):
                                            ]
 
     def call(self,
+             last_flow,  # shape: (batch_size, m)
              last_free_water,  # shape: (batch_size, m)
              runoff,  # shape: (batch_size, m, n)
              ):
@@ -48,7 +49,6 @@ class NonlinearReservoirCell(Layer):
         # 将产流量之和加到自由水状态上
         free_water = last_free_water + runoff_sum  # shape: (batch_size, m)
         # 计算每一层的汇流量比例
-        # flow = ops.zeros_like(free_water)  # shape: (batch_size, m) 错误写法 inplace操作会导致梯度无法传播,改用list最后concat
         flow_list = []
         free_water_list = []
         for i in range(len(self.time_distributed_embedding)):  # 对每一层进行计算
@@ -56,8 +56,8 @@ class NonlinearReservoirCell(Layer):
             # shape: (batch_size, n) -> (batch_size, 1) -> (batch_size, )
             free_water_ratio = self.time_distributed_embedding[i](runoff[:, i, :]).squeeze()
             # 将汇流量比例加与自由水状态相乘，得到本时段第i层的汇流量
-            # shape: (batch_size, ) * (batch_size, ) -> (batch_size, )
-            flow_list.append(free_water[:, i] * free_water_ratio)
+            # shape: (batch_size, ) * (batch_size, ) + (batch_size, ) * (batch_size, ) -> (batch_size, )
+            flow_list.append(free_water[:, i] * free_water_ratio + last_flow[:, i] * (1 - free_water_ratio))
             # 更新自由水状态
             # shape: (batch_size, ) - (batch_size, ) -> (batch_size, )
             free_water_list.append(free_water[:, i] - flow_list[i])
@@ -67,7 +67,7 @@ class NonlinearReservoirCell(Layer):
         free_water = ops.stack(free_water_list, axis=-1)
         # 将m层的汇流量相加，得到本时段的总汇流量
         # shape: (batch_size, m) -> (batch_size, )
-        flow = ops.sum(flow, axis=-1)
+        # flow = ops.sum(flow, axis=-1)
         return free_water, flow  # shape: (batch_size, m), (batch_size, )
 
     def get_config(self):
@@ -85,10 +85,11 @@ class NonlinearReservoirCell(Layer):
 # n = 4
 # # 设置last_free_water和runoff全为正数
 # last_free_water = np.random.random((batch_size, m))
+# last_flow = np.random.random((batch_size, m))
 # runoff = np.random.random((batch_size, m, n))
 #
 # test_nonlinear_reservoir_cell = NonlinearReservoirCell(m=3, layer_units=[32, 16, 1])
-# free_water, flow = test_nonlinear_reservoir_cell(last_free_water, runoff)
+# free_water, flow = test_nonlinear_reservoir_cell(last_flow, last_free_water, runoff)
 # free_water = tensor2numpy(free_water)
 # flow = tensor2numpy(flow)
 
@@ -127,18 +128,22 @@ class NonlinearReservoirModel(Layer):
              ):
         # 初始化自由水状态
         free_water = ops.ones((runoff.shape[0], self.m)) * 0.5  # shape: (batch_size, m)
+        flow_i = ops.ones((runoff.shape[0], self.m)) * 0.5  # shape: (batch_size, m)
         flow_list = []
         # 连续计算
         for i in range(runoff.shape[1]):
             # free_water, flow_i shape: (batch_size, m), (batch_size, )
-            free_water, flow_i = self.cell(free_water, runoff[:, i, :, :])
+            free_water, flow_i = self.cell(last_free_water=free_water,
+                                           runoff=runoff[:, i, :, :],
+                                           last_flow=flow_i)
             if i >= runoff.shape[1] - self.n_steps:
-                flow_list.append(flow_i)
+                flow_list.append(ops.sum(flow_i, axis=-1))
         # 将flow_list转换为张量，list中有n_steps个大小为(batch_size, )的张量
         # shape: [(batch_size, ), (batch_size, ), ..., (batch_size, )] -> (batch_size, horizon)
         return ops.stack(flow_list, axis=-1)
 
-# %% 测试NonlinearReservoir
+
+# # %% 测试NonlinearReservoir
 # import numpy as np
 # from hydronetwork.utils import tensor2numpy
 #

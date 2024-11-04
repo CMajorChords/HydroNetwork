@@ -38,13 +38,14 @@ def nse(y_true,
     计算Nash-Sutcliffe效率系数，用于评估模型的预测结果。
     NSE越接近1，表示模型的预测结果越准确。
     NSE = 1 - sum((y_pred - y_true)^2) / sum((y_true - mean(y_true))^2)
+    由于Loss函数是最小化的，因此返回1 - NSE
 
     :param y_true: 真实的序列，Tensor
     :param y_pred: 预测的序列，Tensor
     :return: Nash-Sutcliffe效率系数
     """
     y_true_mean = ops.mean(y_true)
-    return ops.sum(ops.square(y_pred - y_true)) / ops.sum(ops.square(y_true - y_true_mean)) - 1  # 最小化这个值，所以加负号
+    return ops.sum(ops.square(y_pred - y_true)) / ops.sum(ops.square(y_true - y_true_mean))
 
 
 def kge(y_true,

@@ -174,3 +174,5 @@ def encoder_decoder_lstm(lookback: int,
                                                            encoder_hidden_units=encoder_hidden_units,
                                                            decoder_hidden_units=decoder_hidden_units,
                                                            **kwargs)
+    else:
+        raise ValueError(f"features_type={features_type} is not supported.")
