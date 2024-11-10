@@ -6,7 +6,6 @@ from hydronetwork.dataset.dataset import HydroDataset
 from pandas import DataFrame
 import numpy as np
 from hydronetwork.dataset.preprocessing.interpolate import interpolate_nan
-from numpy import ndarray
 from torch import Tensor
 from itertools import chain
 from keras import Model

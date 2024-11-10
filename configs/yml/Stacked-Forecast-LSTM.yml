@@ -33,7 +33,7 @@ validate_every: 1
 # specify how many random basins to use for validation
 validate_n_random_basins: 531
 
-# specify which metric to calculate during validation (see codebase.evaluation.metric)
+# specify which metrics to calculate during validation (see codebase.evaluation.metrics)
 metrics:
 - NSE
 

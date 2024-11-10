@@ -1,7 +1,7 @@
 import keras
 from keras import Layer, ops
 from hydronetwork.model.layer.embedding import Embedding
-from hydronetwork.model.zonal_exchange_net.mix_water import WaterMixHead
+# from hydronetwork.model.zonal_exchange_net.mix_water import WaterMixHead
 from hydronetwork.model.add_weight.constraints import NonNegAndSumLimit
 
 
@@ -52,7 +52,7 @@ class RunoffProducingCell(Layer):
         self.n = n
         self.n_mix_steps = n_mix_steps
         self.water_capacity_max = water_capacity_max
-        # 土壤蓄水容量, shape = [m, n]
+        # 土壤张力水容量, shape = [m, n]
         self.water_capacity = self.add_weight(shape=(m, n),
                                               trainable=True,
                                               constraint=NonNegAndSumLimit(max_value=water_capacity_max,
@@ -65,9 +65,13 @@ class RunoffProducingCell(Layer):
                                                         m * n],
                                            last_activation='sigmoid')
         # 降水计算参数
-        self.head_infiltration = WaterMixHead(m=m, n=n,
-                                              normalization='linear_normalize',
-                                              n_mix_steps=n_mix_steps)
+        # self.head_infiltration = WaterMixHead(m=m, n=n,
+        #                                       normalization='linear_normalize',
+        #                                       n_mix_steps=n_mix_steps)
+        self.dense_precipitation = Embedding(layer_units=[m * n,
+                                                          m * n,
+                                                          m * n],
+                                             last_activation='softmax')
 
     def call(self,
              last_soil_water,  # [batch_size, m, n]
@@ -84,11 +88,11 @@ class RunoffProducingCell(Layer):
         """
         # 前处理
         # 将降水量除以(n*n_mix_steps)，得到每一切片每一次的降水量 [batch_size, ] -> [batch_size, 1, n]
-        precipitation_progress = precipitation / self.n / self.n_mix_steps  # [batch_size, ]
-        precipitation_progress = precipitation_progress.unsqueeze(-1).unsqueeze(-1)  # [batch_size, 1, 1]
-        precipitation_progress = ops.repeat(precipitation_progress,
-                                            repeats=self.n,
-                                            axis=-1)  # shape = [batch_size, 1, n]
+        # precipitation_progress = precipitation / self.n / self.n_mix_steps  # [batch_size, ]
+        # precipitation_progress = precipitation_progress.unsqueeze(-1).unsqueeze(-1)  # [batch_size, 1, 1]
+        # precipitation_progress = ops.repeat(precipitation_progress,
+        #                                     repeats=self.n,
+        #                                     axis=-1)  # shape = [batch_size, 1, n]
 
         # 扣除蒸散发计算
         # 将与蒸发相关的特征时段初土壤含水量flatten，经过一个全连接层后reshape得到扣除蒸散发的土壤含水量比例
@@ -98,24 +102,26 @@ class RunoffProducingCell(Layer):
             axis=-1)  # [batch_size, m*n+num_features]
         # 将该比例乘以时段初土壤含水量得到扣除蒸散发的土壤含水量，[batch_size, m, n] * [batch_size, m, n] -> [batch_size, m, n]
         soil_water_ratio_evap = self.dense_evaporation(evaporation_features)  # [batch_size, m*n]
-        soil_water_evap = soil_water_ratio_evap.reshape(last_soil_water.shape) * last_soil_water  # [batch_size, m, n]
+        soil_water_after_evap = soil_water_ratio_evap.reshape(last_soil_water.shape) * last_soil_water  # [batch_size, m, n]
 
         # 降水计算
-        # 使用水量混合头计算降水量下渗的比例，[batch_size, m, n] -> [batch_size, m, n]
-        infiltration_ratio = self.head_infiltration(soil_water=last_soil_water, precipitation=precipitation_progress)
-        # 乘以降水量得到降水在每个土块上的分配，
-        # [batch_size, m, n] * [batch_size, ] -> [batch_size, m, n] * [batch_size, 1, 1] -> [batch_size, m, n]
-        infiltration = infiltration_ratio * precipitation.unsqueeze(-1).unsqueeze(-1)
+        # 使用水量混合头计算降水后土壤水的含量，[batch_size, m, n] -> [batch_size, m, n]
+        # soil_water_after_infiltration = self.head_infiltration(soil_water=soil_water_after_evap,
+        #                                                        precipitation=precipitation_progress,
+        #                                                        water_capacity=self.water_capacity.unsqueeze(0),
+        #                                                        )
+        precipitation_features = ops.concatenate([soil_water_after_evap.reshape((soil_water_after_evap.shape[0], -1)),
+                                                  precipitation.unsqueeze(-1)],  # [batch_size, m*n+1]
+                                                 axis=-1)
+        soil_water_ratio_infiltration = self.dense_precipitation(precipitation_features)
+        infiltration_distribution = soil_water_ratio_infiltration.reshape(last_soil_water.shape) * precipitation.unsqueeze(-1).unsqueeze(-1)  # [batch_size, m, n]
 
         # 补充土壤含水量
-        # 将降水量和扣除蒸散发的土壤含水量相加得到补充后的土壤含水量，[batch_size, m, n] + [batch_size, m, n] -> [batch_size, m, n]
-        # 对补充后的土壤含水量与土壤蓄水容量取最小值，得到时段末土壤含水量，[batch_size, m, n] -> [batch_size, m, n]
-        soil_water = ops.minimum(soil_water_evap + infiltration, self.water_capacity)
+        soil_water_after_infiltration = soil_water_after_evap + infiltration_distribution
+        soil_water = ops.minimum(soil_water_after_infiltration, self.water_capacity)  # [batch_size, m, n]
 
         # 计算产流量
-        # 计算每个土块的产流量，产流量=降水量（下渗）-蒸散发量-土壤含水量变化量
-        # [batch_size, m, n]
-        runoff = infiltration - (soil_water - soil_water_evap)
+        runoff = infiltration_distribution - (soil_water - soil_water_after_evap)  # [batch_size, m, n]
         return runoff, soil_water  # add evaporation for test
 
     def get_config(self):

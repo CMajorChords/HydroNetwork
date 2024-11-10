@@ -51,18 +51,19 @@ class WaterMixHead(Layer):
         elif normalization == "softmax":
             self.normalization = SoftmaxNormalization(axis=[-1, -2])
         else:
-            self.normalization = LinearNormalization(axis=[-1, -2], add_relu=True)
+            self.normalization = LinearNormalization(axis=[-1, -2])
 
     # def build(self, input_shape):
-
     def call(self,
              soil_water,  # size=batch_size*m*n
              precipitation,  # size=batch_size*1*n
              ):
+        total_water = ops.sum(soil_water, axis=[-1, -2], keepdims=True) + ops.sum(precipitation, axis=-1,
+                                                                                  keepdims=True)  # size=batch_size*1*1
         for i in range(self.n_mix_steps):
             soil_water = ops.concatenate([soil_water, precipitation], axis=-2)  # size=batch_size*(m+1)*n
             # 垂向混合
-            soil_water = self.conv[i](soil_water)  # size=batch_size*(m+1)*n -> size=batch_size*m*n
+            soil_water_ratio = self.conv[i](soil_water)  # size=batch_size*(m+1)*n -> size=batch_size*m*n
             # # 横向混合，需要首先将m*n转换为n*m
             # if self.if_lateral_mix:
             #     soil_water = ops.transpose(soil_water, axes=[0, 2, 1])  # size=batch_size*n*m
@@ -72,11 +73,10 @@ class WaterMixHead(Layer):
             #         soil_water[:, :, m] = m_soil_water.squeeze(-1)
             #     # 重新转换为m*n
             #     soil_water = ops.transpose(soil_water, axes=[0, 2, 1])  # size=batch_size*m*n
-            # 激活函数，注意最后一次混合不需要激活函数
-            if i < self.n_mix_steps - 1:
-                soil_water = self.relu(soil_water)
-        # 归一化
-        return self.normalization(soil_water)
+            # 归一化
+            soil_water_ratio = self.normalization(soil_water_ratio)
+            soil_water = soil_water_ratio * total_water
+        return soil_water
 
     def get_config(self):
         return {"m": self.m,

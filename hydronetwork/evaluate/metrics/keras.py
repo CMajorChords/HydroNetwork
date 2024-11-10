@@ -1,4 +1,4 @@
-from keras import ops
+import numpy as np
 
 
 def mse(y_true,
@@ -13,7 +13,7 @@ def mse(y_true,
     :param y_pred: 预测的序列，Tensor
     :return: 均方误差
     """
-    return ops.mean(ops.square(y_pred - y_true))
+    return np.mean(np.square(y_pred - y_true))
 
 
 def rmse(y_true,
@@ -28,7 +28,7 @@ def rmse(y_true,
     :param y_pred: 预测的序列，Tensor
     :return: 均方根误差
     """
-    return ops.sqrt(mse(y_true, y_pred))
+    return np.sqrt(mse(y_true, y_pred))
 
 
 def nse(y_true,
@@ -38,14 +38,13 @@ def nse(y_true,
     计算Nash-Sutcliffe效率系数，用于评估模型的预测结果。
     NSE越接近1，表示模型的预测结果越准确。
     NSE = 1 - sum((y_pred - y_true)^2) / sum((y_true - mean(y_true))^2)
-    由于Loss函数是最小化的，因此返回1 - NSE
 
     :param y_true: 真实的序列，Tensor
     :param y_pred: 预测的序列，Tensor
     :return: Nash-Sutcliffe效率系数
     """
-    y_true_mean = ops.mean(y_true)
-    return ops.sum(ops.square(y_pred - y_true)) / ops.sum(ops.square(y_true - y_true_mean))
+    y_true_mean = np.mean(y_true, axis=-1, keepdims=True)
+    return np.sum(np.square(y_pred - y_true)) / np.sum(np.square(y_true - y_true_mean))
 
 
 def kge(y_true,
@@ -60,13 +59,13 @@ def kge(y_true,
     :param y_pred: 预测的序列，Tensor
     :return: Kling-Gupta效率系数
     """
-    y_true_mean = ops.mean(y_true)
-    y_pred_mean = ops.mean(y_pred)
-    y_true_std = ops.std(y_true)
-    y_pred_std = ops.std(y_pred)
+    y_true_mean = np.mean(y_true)
+    y_pred_mean = np.mean(y_pred)
+    y_true_std = np.std(y_true)
+    y_pred_std = np.std(y_pred)
 
     alpha = y_pred_std / y_true_std
     beta = y_pred_mean / y_true_mean
-    r = ops.sum((y_pred - y_pred_mean) * (y_true - y_true_mean)) / (y_pred_std * y_true_std)
+    r = np.sum((y_pred - y_pred_mean) * (y_true - y_true_mean)) / (y_pred_std * y_true_std)
 
-    return 1 - ops.sqrt(ops.square(r - 1) + ops.square(alpha - 1) + ops.square(beta - 1))
+    return 1 - np.sqrt(np.square(r - 1) + np.square(alpha - 1) + np.square(beta - 1))

@@ -42,7 +42,55 @@ class MinMaxL1Norm(keras.constraints.Constraint):
 
 class NonNegAndSumLimit(keras.constraints.Constraint):
     """
-    NonNegAndSumLimit约束，用于约束权重矩阵的非负性和和为1。
+    NonNegAndSumLimit约束，用于约束权重矩阵的非负性与矩阵之和的上下界
+
+    :param min_value: 矩阵之和的最小值
+    :param max_value: 矩阵之和的最大值
+    :param axis: 约束的轴
+    :param rate: 约束力度，取值在[0, 1]之间，0表示不进行约束，1表示完全约束
+    """
+
+    def __init__(self,
+                 min_value,
+                 max_value,
+                 axis=-1,
+                 rate=1.0,
+                 ):
+        self.rate = rate
+        self.axis = axis
+        self.max_value = max_value
+        self.min_value = min_value
+
+    def __call__(self, w):
+        w = backend.convert_to_tensor(w)
+        # 非负性约束
+        w = ops.relu(w)
+        # 和的上下界约束
+        total_sum = ops.sum(w, axis=self.axis, keepdims=True)
+        # 计算缩放因子，使得矩阵之和在[min_value, max_value]之间
+        scaling_factor = ops.where(
+            total_sum < self.min_value,  # 如果总和小于 min_value
+            x1=self.min_value / (backend.epsilon() + total_sum),  # 使用 min_value 缩放
+            x2=ops.where(
+                total_sum > self.max_value,  # 如果总和大于 max_value
+                x1=self.max_value / (backend.epsilon() + total_sum),  # 使用 max_value 缩放
+                x2=1.0  # 否则保持不变
+            )
+        )
+        return w * (scaling_factor * self.rate + (1 - self.rate))
+
+    def get_config(self):
+        return {
+            "rate": self.rate,
+            "axis": self.axis,
+            "max_value": self.max_value,
+            "min_value": self.min_value,
+        }
+
+
+class SumL1Norm(keras.constraints.Constraint):
+    """
+    SumL1Norm约束，用于约束权重矩阵的L1范数和为1。
 
     :param rate: 约束力度，取值在[0, 1]之间，0表示不进行约束，1表示完全约束
     :param axis: 约束的轴
@@ -50,25 +98,19 @@ class NonNegAndSumLimit(keras.constraints.Constraint):
 
     def __init__(self,
                  rate=1.0,
-                 axis=-1,
-                 max_value=120,
+                 axis=0,
                  ):
         self.rate = rate
         self.axis = axis
-        self.max_value = max_value
 
     def __call__(self, w):
         w = backend.convert_to_tensor(w)
-        # 非负性约束
-        w = ops.relu(w)
-        # 和为1约束
-        total_sum = ops.sum(w, axis=self.axis, keepdims=True)
-        desired = ops.minimum(1.0, self.max_value / (backend.epsilon() + total_sum))
-        return w * (desired * self.rate + (1 - self.rate))
+        # L1范数和为1约束
+        norms = ops.sum(w, axis=self.axis, keepdims=True)
+        return w / (backend.epsilon() + norms)
 
     def get_config(self):
         return {
             "rate": self.rate,
             "axis": self.axis,
-            "max_value": self.max_value
         }

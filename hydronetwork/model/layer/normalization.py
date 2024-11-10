@@ -8,21 +8,18 @@ class LinearNormalization(Layer):
     """
     线性归一化层，对输入的特征进行线性归一化
     :param axis: 归一化的轴，-1表示对最后一个维度进行归一化，{-1, -2}表示对倒数两个维度进行归一化
-    :param add_relu: 是否在归一化之前添加relu激活函数
     """
 
     def __init__(self,
                  axis,
-                 add_relu=False,
                  **kwargs):
         assert axis == -1 or axis == [-1, -2], "axis必须是-1或者[-1, -2]"
         super().__init__(**kwargs)
-        self.add_relu = add_relu
         self.axis = axis
 
     def call(self, inputs):  # inputs: [batch_size, feature_size]
-        if self.add_relu:
-            inputs = ops.relu(inputs)
+        # 为了防止数值始终为正数，所以减去最小值
+        inputs = inputs - ops.min(inputs, axis=self.axis, keepdims=True)
         return inputs / ops.sum(inputs, axis=self.axis, keepdims=True)
 
     def get_config(self):

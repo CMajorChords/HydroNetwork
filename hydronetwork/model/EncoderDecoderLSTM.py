@@ -1,5 +1,6 @@
 # LSTM类模型的实现
 import keras
+from keras import ops
 
 
 class Encoder(keras.Model):
@@ -66,13 +67,12 @@ class EncoderDecoderFeaturesLookbackBidirectional(keras.Model):
         """
         # 将x根据时间步长分割为encoder_input和decoder_input，维度为(batch_size, time_steps, features)
         x_lookback, x_bidirectional = x
-        x_lookback = keras.ops.expand_dims(x_lookback, axis=-1)
-        encoder_input = x_bidirectional[:, :self.lookback, :]
-        decoder_input = x_bidirectional[:, self.lookback:, :]
+        encoder_input = x_bidirectional[:, :self.lookback, :] # (batch_size, lookback, features)
+        decoder_input = x_bidirectional[:, self.lookback:, :] # (batch_size, horizon, features)
         # x_lookback的维度是(batch_size, lookback, features)
         # encoder_input的维度是(batch_size, lookback, features)
         # 将x_lookback拼接到encoder_input的最后一个维度，维度变为(batch_size, lookback，features + lookback_features)
-        encoder_input = keras.layers.concatenate([encoder_input, x_lookback], axis=-1)
+        encoder_input = ops.concatenate([encoder_input, x_lookback], axis=-1)
         # Encoder LSTM
         state_h, state_c = self.encoder(encoder_input)
         # Dense层转换状态
@@ -83,7 +83,7 @@ class EncoderDecoderFeaturesLookbackBidirectional(keras.Model):
         # Dense层投影
         y = self.time_distributed_dense(decoder_output)  # (batch_size, horizon, 1)
         # 丢弃最后一个为1的维度
-        y = keras.ops.squeeze(y, axis=-1)
+        y = ops.squeeze(y, axis=-1)
         return y
 
 
@@ -142,7 +142,7 @@ class EncoderDecoderLSTMFeaturesBidirectional(keras.Model):
         # Dense层投影
         y = self.time_distributed_dense(decoder_output)  # (batch_size, horizon, 1)
         # 丢弃最后一个为1的维度
-        y = keras.ops.squeeze(y, axis=-1)
+        y = ops.squeeze(y, axis=-1)
         return y
 
 
@@ -156,7 +156,7 @@ def encoder_decoder_lstm(lookback: int,
     根据features_type返回对应的Encoder-Decoder LSTM模型
     :param lookback: 历史时间步长
     :param horizon: 预测的时间步长
-    :param features_type: 输入模型的特征类型，支持{'bidirectional', 'lookback_bidirectional'}和{'bidirectional'}
+    :param features_type: 输入模型的特征类型，支持{'bidirectional', 'lookback'}和{'bidirectional'}
     :param encoder_hidden_units: Encoder LSTM隐藏层单元数
     :param decoder_hidden_units: Decoder LSTM隐藏层单元数
     :param kwargs: 其他keras.Model参数
