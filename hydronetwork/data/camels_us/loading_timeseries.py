@@ -33,7 +33,7 @@ def load_single_basin_timeseries(gauge_id: str,
     forcing = load_single_basin_forcing(gauge_id, huc_02, root_path, source, ignore_columns)
     streamflow = load_single_basin_streamflow(gauge_id=gauge_id, huc_02=huc_02, root_path=root_path, unit=unit)
     timeseries = pd.concat([forcing, streamflow], axis=1)
-    timeseries.columns.name = "timeseries_type"
+    # timeseries.columns.name = "timeseries_type"
     return timeseries
 
 

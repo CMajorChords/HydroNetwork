@@ -106,12 +106,12 @@ class HydroDatasetMultiBasinWithAttributes(keras.utils.PyDataset):
         :return: lookback输入、attributes输入和target输出
         """
         # 设置输入的静态属性数据
-        input_attributes = self.attributes[self.attributes_index[idx]]
+        input_attributes = self.attributes[self.attributes_index[idx]] # (batch_size, num_static_features)
         # 设置输入的时间序列数据
         input_timeseries = stack_2d_slices(data=self.features_lookback,
                                            index=self.timeseries_index[idx],
                                            start_windows_length=0,
-                                           end_windows_length=self.lookback)
+                                           end_windows_length=self.lookback) # (batch_size, lookback, num_features)
         output_target = stack_2d_slices(data=self.target,
                                         index=self.timeseries_index[idx],
                                         start_windows_length=self.lookback,

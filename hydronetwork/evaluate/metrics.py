@@ -44,7 +44,7 @@ def nse(y_true,
     :return: Nash-Sutcliffe效率系数
     """
     y_true_mean = np.mean(y_true, axis=-1, keepdims=True)
-    return np.sum(np.square(y_pred - y_true)) / np.sum(np.square(y_true - y_true_mean))
+    return 1 - np.sum(np.square(y_pred - y_true)) / np.sum(np.square(y_true - y_true_mean))
 
 
 def kge(y_true,

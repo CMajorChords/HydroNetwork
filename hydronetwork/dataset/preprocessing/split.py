@@ -23,7 +23,8 @@ def split_ts_by_int(data: Union[DataFrame, Series],
     end_list = cumsum(split_list)
     start_list = [a - b for a, b in zip(end_list, split_list)]
     # 划分数据集
-    split_data = map(lambda start, end: data.iloc[start:end], start_list, end_list)
+    # split_data = map(lambda start, end: data.iloc[start:end], start_list, end_list)
+    split_data = [data.iloc[start:end] for start, end in zip(start_list, end_list)]
     return split_data
 
 
@@ -46,7 +47,8 @@ def split_ts_by_datetime(data: Union[DataFrame, Series],
     # 划分数据集
     start_list = split_list[:-1]
     end_list = split_list[1:]
-    split_data = map(lambda start, end: data.loc[start:end], start_list, end_list)
+    # split_data = map(lambda start, end: data.loc[start:end], start_list, end_list)
+    split_data = [data.loc[start:end] for start, end in zip(start_list, end_list)]
     return split_data
 
 
@@ -105,7 +107,6 @@ def split_timeseries(data: [DataFrame, Series],
         # 将数据集按流域id分组
         data_group_by_basin = {gauge_id: group_data.droplevel(level=0) for gauge_id, group_data in
                                data.groupby(level=0)}
-
         # 多进程处理每个流域
         len_gauge_id_list = len(data_group_by_basin)
         split_data = process_map(split_ts_for_single_basin,
@@ -114,12 +115,12 @@ def split_timeseries(data: [DataFrame, Series],
                                  desc=f"正在划分{len_gauge_id_list}个流域的数据集",
                                  total=len_gauge_id_list,
                                  )  # 划分时间序列数据集为多个子集
-        split_data = zip(*split_data)  # 将每个时间段的数据集合并成一个tuple
-
+        split_data = zip(*split_data)  # 将每个时间段的数据集合并成一个tuple，每个元素为一个划分的时间段的数据集
         # 将tuple中的数据集合并成一个DataFrame，index为multiindex，第一层为流域id，第二层为时间
-        def concat_data(data_iter, keys):
-            return concat(data_iter, keys=keys, axis=0)
-
-        return map(concat_data, split_data, data_group_by_basin.keys())
+        return (concat(data_iter,
+                       axis=0,
+                       keys=data_group_by_basin.keys(),
+                       names=["gauge_id", "datetime"],
+                       ) for data_iter in split_data)
     else:  # 如果数据集index为时间，即单个流域的数据集
         return split_ts_for_single_basin(data, split_list)

@@ -1,8 +1,0 @@
-timeseries_type,min,max,scale_lower_bound,scale_upper_bound
-prcp(mm/day),0.0,4.664004971708984,0,1
-srad(W/m2),36.81,781.4,0,1
-tmax(C),-13.66,29.59,0,1
-tmin(C),-24.24,16.15,0,1
-vp(Pa),4.535927283245931,7.271488256299431,0,1
-streamflow,2.388762789235098,9.952325334619427,0,1
-is_rain,0.0,1.0,0,1

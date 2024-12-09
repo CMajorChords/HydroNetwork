@@ -1,6 +1,7 @@
 # 对特征做归一化处理
 import keras
-from keras import Layer, ops
+from keras import Layer, ops, layers
+from keras.api.backend import epsilon
 
 
 @keras.saving.register_keras_serializable(package='Custom', name='LinearNormalization')
@@ -8,19 +9,25 @@ class LinearNormalization(Layer):
     """
     线性归一化层，对输入的特征进行线性归一化
     :param axis: 归一化的轴，-1表示对最后一个维度进行归一化，{-1, -2}表示对倒数两个维度进行归一化
+    :param activation: 是否在归一化之前添加激活函数
     """
 
     def __init__(self,
-                 axis,
+                 axis=-1,
+                 activation=None,
                  **kwargs):
         assert axis == -1 or axis == [-1, -2], "axis必须是-1或者[-1, -2]"
         super().__init__(**kwargs)
         self.axis = axis
+        if activation:
+            self.activation = layers.Activation(activation)
 
     def call(self, inputs):  # inputs: [batch_size, feature_size]
         # 为了防止数值始终为正数，所以减去最小值
-        inputs = inputs - ops.min(inputs, axis=self.axis, keepdims=True)
-        return inputs / ops.sum(inputs, axis=self.axis, keepdims=True)
+        # inputs = inputs - ops.min(inputs, axis=self.axis, keepdims=True)
+        if hasattr(self, 'activation'):
+            inputs = self.activation(inputs)
+        return inputs / (ops.sum(inputs, axis=self.axis, keepdims=True) + epsilon())
 
     def get_config(self):
         return {'axis': self.axis}
@@ -40,7 +47,7 @@ class SoftmaxNormalization(Layer):
 
     def call(self, inputs):  # inputs: [batch_size, feature_size]
         exp_x = ops.exp(inputs - ops.max(inputs, axis=self.axis, keepdims=True))
-        return exp_x / ops.sum(exp_x, axis=self.axis, keepdims=True)
+        return exp_x / (ops.sum(exp_x, axis=self.axis, keepdims=True) + epsilon())
 
     def get_config(self):
         return {'axis': self.axis}

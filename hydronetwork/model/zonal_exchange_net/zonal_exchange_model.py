@@ -1,8 +1,8 @@
 # 空间混合网络
 import keras
 from keras import Model
-from hydronetwork.model.layer.nonlinear_reservoir import NonlinearReservoirModel as ZENConfluence
-from hydronetwork.model.zonal_exchange_net.produce_runoff import RunoffProducingModel as ZENRunoffProducing
+from hydronetwork.model.layer.nonlinear_reservoir import NonlinearReservoirModel
+from hydronetwork.model.zonal_exchange_net.produce_runoff import RunoffProducingModel
 
 
 @keras.saving.register_keras_serializable(package='Custom', name='ZonalExchangeNet')
@@ -26,6 +26,7 @@ class ZonalExchangeNet(Model):
                  n_mix_steps: int = 3,
                  water_capacity_max: int = 120,
                  layer_units: list[int] = (32, 16, 1),
+                 water_mix_head_activation='softmax',
                  **kwargs):
         super().__init__(**kwargs)
         self.m = m
@@ -33,15 +34,18 @@ class ZonalExchangeNet(Model):
         self.n_mix_steps = n_mix_steps
         self.water_capacity_max = water_capacity_max
         self.layer_units = layer_units
-        self.confluence = ZENConfluence(m=m, layer_units=layer_units, horizon=horizon)
-        self.runoff_producing = ZENRunoffProducing(m=m, n=n, water_capacity_max=water_capacity_max)
+        self.confluence = NonlinearReservoirModel(m=m, layer_units=layer_units, horizon=horizon)
+        self.runoff_producing = RunoffProducingModel(m=m, n=n,
+                                                     water_capacity_max=water_capacity_max,
+                                                     water_mix_head_activation=water_mix_head_activation
+                                                     )
 
     def call(self,
-             inputs  # size=batch_size*T*2
+             inputs,  # shape: (batch_size, T, num_features+1)
              ):
         precipitation = inputs[:, :, 0]
         evaporation_features = inputs[:, :, 1:]
         # 计算产流过程
-        runoff = self.runoff_producing(precipitation, evaporation_features)
+        runoff = self.runoff_producing(precipitation, evaporation_features)  # [batch_size, T, m, n]
         # 计算汇流过程
         return self.confluence(runoff)

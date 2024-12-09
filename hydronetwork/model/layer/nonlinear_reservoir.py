@@ -66,9 +66,7 @@ class NonlinearReservoirCell(Layer):
         flow = ops.stack(flow_list, axis=-1)
         free_water = ops.stack(free_water_list, axis=-1)
         # 将m层的汇流量相加，得到本时段的总汇流量
-        # shape: (batch_size, m) -> (batch_size, )
-        # flow = ops.sum(flow, axis=-1)
-        return free_water, flow  # shape: (batch_size, m), (batch_size, )
+        return free_water, flow  # shape: (batch_size, m), (batch_size, m)
 
     def get_config(self):
         return {"m": self.m,
@@ -141,7 +139,6 @@ class NonlinearReservoirModel(Layer):
         # 将flow_list转换为张量，list中有n_steps个大小为(batch_size, )的张量
         # shape: [(batch_size, ), (batch_size, ), ..., (batch_size, )] -> (batch_size, horizon)
         return ops.stack(flow_list, axis=-1)
-
 
 # # %% 测试NonlinearReservoir
 # import numpy as np

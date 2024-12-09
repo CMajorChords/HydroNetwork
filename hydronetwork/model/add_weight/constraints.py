@@ -64,7 +64,7 @@ class NonNegAndSumLimit(keras.constraints.Constraint):
     def __call__(self, w):
         w = backend.convert_to_tensor(w)
         # 非负性约束
-        w = ops.relu(w)
+        # w = ops.relu(w)
         # 和的上下界约束
         total_sum = ops.sum(w, axis=self.axis, keepdims=True)
         # 计算缩放因子，使得矩阵之和在[min_value, max_value]之间

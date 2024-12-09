@@ -7,16 +7,20 @@ from hydronetwork.model.layer.normalization import LinearNormalization
 @keras.saving.register_keras_serializable(package='Custom', name='Embedding')
 class Embedding(Layer):
     """
-    使用先行层对特征进行embedding
+    使用线性层对特征进行embedding
     :param activation: 激活函数
     :param first_layer_units: 第一层神经元数量
     :param layer_units: 每层神经元数量
     :param last_activation: 最后一层激活函数，可选relu、sigmoid、softmax
+    :param residual: 是否使用残差连接
+    :param normalize: 是否对输出进行归一化
     """
 
     def __init__(self,
                  layer_units: list[int] = (32, 16, 1),
                  last_activation: str = "relu",
+                 residual: bool = True,
+                 normalize: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
         # 检查神经元数量是否为int
@@ -27,15 +31,21 @@ class Embedding(Layer):
             dense_layers.append(layers.Dense(unit, activation="relu"))
         dense_layers.append(layers.Dense(layer_units[-1]))
         self.embedding = keras.Sequential(dense_layers)
-        self.residual = layers.Dense(layer_units[-1])
-        if last_activation == "linear_normalize":
-            self.last_activation = LinearNormalization(axis=-1)
-        else:
-            self.last_activation = layers.Activation(last_activation)
+        if residual:
+            self.residual = layers.Dense(layer_units[-1])
+        self.last_activation = layers.Activation(last_activation)
+        if normalize:
+            self.normalization = LinearNormalization(axis=-1)
 
     def call(self, features):
-        output = self.embedding(features) + self.residual(features)
-        return self.last_activation(output)
+        if hasattr(self, 'residual'):
+            output = self.embedding(features) + self.residual(features)
+        else:
+            output = self.embedding(features)
+        output = self.last_activation(output)
+        if hasattr(self, 'normalization'):
+            output = self.normalization(output)
+        return output
 
 # %% 测试层 已通过测试
 

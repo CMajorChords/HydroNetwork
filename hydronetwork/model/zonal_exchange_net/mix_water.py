@@ -1,6 +1,6 @@
 import keras
 from keras import layers, Layer, ops, activations
-from hydronetwork.model.layer.attention import SelfAttention
+# from hydronetwork.model.layer.attention import SelfAttention
 from hydronetwork.model.layer.normalization import LinearNormalization, SoftmaxNormalization
 
 
@@ -29,13 +29,13 @@ class WaterMixHead(Layer):
                  n: int,
                  normalization: str,
                  n_mix_steps: int = 3,
-                 if_lateral_mix: bool = True,
+                 # if_lateral_mix: bool = True,
                  **kwargs):
         super(WaterMixHead, self).__init__(**kwargs)
         self.m = m
         self.n = n
         self.n_mix_steps = n_mix_steps
-        self.if_lateral_mix = if_lateral_mix
+        # self.if_lateral_mix = if_lateral_mix
         self.conv = []
         self.attention = []
         self.relu = layers.ReLU()
@@ -58,8 +58,11 @@ class WaterMixHead(Layer):
              soil_water,  # size=batch_size*m*n
              precipitation,  # size=batch_size*1*n
              ):
-        total_water = ops.sum(soil_water, axis=[-1, -2], keepdims=True) + ops.sum(precipitation, axis=-1,
+        total_water = ops.sum(soil_water, axis=[-1, -2], keepdims=True) + ops.sum(precipitation,
+                                                                                  axis=-1,
                                                                                   keepdims=True)  # size=batch_size*1*1
+        # 将降水量平均分为n_mix_steps份
+        precipitation = precipitation / self.n_mix_steps  # size=batch_size*1*n
         for i in range(self.n_mix_steps):
             soil_water = ops.concatenate([soil_water, precipitation], axis=-2)  # size=batch_size*(m+1)*n
             # 垂向混合
@@ -83,7 +86,7 @@ class WaterMixHead(Layer):
                 "n": self.n,
                 "normalization": self.normalization,
                 "n_mix_steps": self.n_mix_steps,
-                "if_lateral_mix": self.if_lateral_mix,
+                # "if_lateral_mix": self.if_lateral_mix,
                 }
 
 # %%测试层 已通过测试

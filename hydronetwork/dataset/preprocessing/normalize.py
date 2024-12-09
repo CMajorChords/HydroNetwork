@@ -1,5 +1,7 @@
 # 创建处理数据归一化的工具函数和类
 from typing import Union, Optional, Tuple, List
+
+from networkx.algorithms.flow import minimum_cut_value
 from pandas import DataFrame, Series
 
 
@@ -52,8 +54,33 @@ def normalize(data: Union[DataFrame, Series],
 
 def denormalize(data: Union[DataFrame, Series],
                 scale_params: DataFrame,
-                use_cols: Optional[Union[str, List[str]]] = None,
+                use_col: str,
                 ) -> Union[DataFrame, Series]:
+    """
+    将提供的数据（一般是模型的预测值）反归一化到原始数据范围内。
+    所用的归一化参数是指定列的归一化参数。即不管data中有多少列，只用指定列的归一化参数。
+    一般用于将模型的预测值反归一化到原始数据范围内。
+
+    :param data:
+    :param scale_params:
+    :param use_col:
+    :return:
+    """
+    # 获取归一化参数
+    min_value = scale_params.loc[use_col, 'min']
+    max_value = scale_params.loc[use_col, 'max']
+    scale_lower_bound = scale_params.loc[use_col, 'scale_lower_bound']
+    scale_upper_bound = scale_params.loc[use_col, 'scale_upper_bound']
+    # 对数据进行还原处理
+    data = (data - scale_lower_bound) / (scale_upper_bound - scale_lower_bound)
+    data = data * (max_value - min_value) + min_value
+    return data
+
+
+def restore(data: Union[DataFrame, Series],
+            scale_params: DataFrame,
+            use_cols: Optional[Union[str, List[str]]] = None,
+            ) -> Union[DataFrame, Series]:
     """
     将归一化后的数据还原到原始数据范围内。
 
@@ -130,8 +157,21 @@ class Normalizer:
 
     def denormalize(self,
                     data: Union[DataFrame, Series],
-                    use_cols: Optional[Union[str, List[str]]] = None,
+                    use_col: str,
                     ) -> Union[DataFrame, Series]:
+        """
+        对所有时间序列数据只使用指定列的参数进行反归一化处理
+
+        :param data: 时间序列数据，一般是模型的预测值
+        :param use_col: 进行反归一化的所用参数列
+        :return: 反归一化后的数据
+        """
+        return denormalize(data, self.scale_params, use_col)
+
+    def restore(self,
+                data: Union[DataFrame, Series],
+                use_cols: Optional[Union[str, List[str]]] = None,
+                ) -> Union[DataFrame, Series]:
         """
         对时间序列数据进行反归一化处理
 
@@ -139,7 +179,7 @@ class Normalizer:
         :param use_cols: 需要还原的列
         :return: 反归一化后的数据
         """
-        return denormalize(data, self.scale_params, use_cols=use_cols)
+        return restore(data, self.scale_params, use_cols=use_cols)
 
     def to_csv(self, path: str):
         """
